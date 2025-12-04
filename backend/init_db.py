@@ -8,7 +8,8 @@ from sqlalchemy import create_engine, text
 # 1. Cargar configuración
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
-with open(os.path.join(BASE_DIR, 'config.yaml'), 'r') as f:
+
+with open(os.path.join(BASE_DIR, 'config.yaml'), 'r', encoding='utf-8') as f:
     config = yaml.safe_load(f)
 
 fake = Faker('es_MX')
@@ -27,6 +28,7 @@ def init_tables():
     # ---------------------------------------------------------
     # 1. PREPARAR PRODUCCIÓN (CON INTEGRIDAD ENTRE PRODUCTOS)
     # ---------------------------------------------------------
+
     print(f" Conectando a Producción...")
     with engine_prod.connect() as conn:
         # Borramos todo en orden inverso a las dependencias
@@ -69,7 +71,7 @@ def init_tables():
         
         # 1. Generar Lista de Productos Reales (Inventario)
         lista_productos = []
-        for _ in range(30): # 30 productos en el catálogo
+        for _ in range(30): 
             prod = f"{fake.word().capitalize()} {fake.word()}-{random.randint(100,999)}"
             # Evitar duplicados al generar
             while prod in lista_productos:
@@ -103,6 +105,7 @@ def init_tables():
     # ---------------------------------------------------------
     # 2. PREPARAR QA (ESQUEMA ESPEJO)
     # ---------------------------------------------------------
+
     print(f" Conectando a QA...")
     with engine_qa.connect() as conn:
         conn.execute(text("DROP TABLE IF EXISTS detalle_ordenes, ordenes, inventario, clientes, auditoria CASCADE"))
