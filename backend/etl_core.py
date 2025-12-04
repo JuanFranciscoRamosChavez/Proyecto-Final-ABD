@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 import time
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
 from faker import Faker
 from dotenv import load_dotenv
@@ -19,12 +19,22 @@ logger = logging.getLogger(__name__)
 class ETLEngine:
     def __init__(self):
         config_path = os.path.join(BASE_DIR, 'config.yaml')
+        # Carga con UTF-8
         with open(config_path, 'r', encoding='utf-8') as f:
             self.config = yaml.safe_load(f)
         
+        # --- CONFIGURACIÓN TÉCNICA ---
+        # Leemos el nombre y el batch size de la configuración
+        settings = self.config.get('settings', {})
+        self.app_name = settings.get('app_name', 'DataMask ETL')
+        self.batch_size = int(settings.get('batch_size', 1000)) # Default 1000 si no existe
+        
         self.faker = Faker('es_MX')
         self.salt = os.getenv("HASH_SALT", "default_salt").encode()
-        self.max_retries = 3  
+        
+        scheduler_conf = settings.get('scheduler', {})
+        retry_enabled = scheduler_conf.get('auto_retry', False)
+        self.max_retries = 3 if retry_enabled else 1
         self.retry_wait = 2   
         
         try:
@@ -44,6 +54,19 @@ class ETLEngine:
         elif rule == 'preserve_format': return f"+52 ({self.faker.random_int(55,99)}) ***-****"
         elif rule == 'redact': return "****"
         return value
+
+    def cleanup_old_logs(self):
+        try:
+            days = self.config.get('settings', {}).get('security', {}).get('log_retention_days', 90)
+            cutoff_date = datetime.now() - timedelta(days=int(days))
+            
+            with self.engine_qa.connect() as conn:
+                result = conn.execute(text("DELETE FROM auditoria WHERE fecha_ejecucion < :cutoff"), {"cutoff": cutoff_date})
+                conn.commit()
+                if result.rowcount > 0:
+                    logger.info(f" [CLEANUP] Se eliminaron {result.rowcount} registros de auditoría más antiguos de {days} días.")
+        except Exception as e:
+            logger.error(f"[WARN] Error limpiando logs antiguos: {e}")
 
     def log_audit(self, table, records, status, error=None):
         try:
@@ -65,7 +88,9 @@ class ETLEngine:
             if not enabled: return
 
             report_path = os.path.join(BASE_DIR, 'notifications_log.json')
-            
+            days = self.config.get('settings', {}).get('security', {}).get('log_retention_days', 90)
+            cutoff_date = datetime.now() - timedelta(days=int(days))
+
             new_event = {
                 "timestamp": datetime.now().isoformat(),
                 "table": table,
@@ -83,8 +108,13 @@ class ETLEngine:
 
             history.insert(0, new_event)
             
+            filtered_history = [
+                entry for entry in history 
+                if datetime.fromisoformat(entry['timestamp']) > cutoff_date
+            ][:1000] 
+
             with open(report_path, 'w', encoding='utf-8') as f:
-                json.dump(history[:50], f, indent=4, ensure_ascii=False)
+                json.dump(filtered_history, f, indent=4, ensure_ascii=False)
                 
         except Exception as e:
             logger.error(f"Error guardando JSON: {e}")
@@ -107,7 +137,8 @@ class ETLEngine:
         
         for attempt in range(1, self.max_retries + 1):
             try:
-                logger.info(f"[INFO] Procesando {table} (Intento {attempt}/{self.max_retries})...")
+                retry_msg = f" (Intento {attempt}/{self.max_retries})" if self.max_retries > 1 else ""
+                logger.info(f"[INFO] Procesando {table}{retry_msg}...")
                 
                 last_date = self.get_max_date(table, filter_col)
                 query = f"SELECT * FROM {table}"
@@ -125,7 +156,6 @@ class ETLEngine:
 
                 total_extracted = len(df)
 
-                # Aplicar Muestreo
                 if sample_percent < 100:
                     df = df.sample(frac=sample_percent/100, random_state=42)
                     logger.info(f"   [SAMPLE] Muestreo aplicado: {sample_percent}% ({len(df)} de {total_extracted} registros).")
@@ -137,23 +167,19 @@ class ETLEngine:
                         df[col] = df[col].apply(lambda x: self.mask_value(x, rule))
 
                 with self.engine_qa.connect() as conn:
-                    # 1. Desactivar FKs para evitar errores en carga parcial
                     conn.execute(text("SET session_replication_role = 'replica';"))
                     
                     if not df.empty:
-                        # Limpieza de duplicados
                         ids_list = df[pk].tolist()
                         if ids_list:
                             safe_ids = [str(x) for x in ids_list]
                             id_str = ",".join(safe_ids)
-                            
                             delete_query = f"DELETE FROM {table} WHERE {pk} IN ({id_str})"
                             conn.execute(text(delete_query))
                     
                     if not df.empty:
-                        df.to_sql(table, conn, if_exists='append', index=False, method='multi', chunksize=1000)
+                        df.to_sql(table, conn, if_exists='append', index=False, method='multi', chunksize=self.batch_size)
                     
-                    # 2. Restaurar FKs
                     conn.execute(text("SET session_replication_role = 'origin';"))
                     conn.commit()
                 
@@ -173,7 +199,9 @@ class ETLEngine:
                     self.save_json_report(table, "ERROR", 0, "FAILED", str(e))
 
     def run_pipeline(self, target_table=None, override_percent=None):
-        logger.info("[START] Iniciando Pipeline...")
+        logger.info(f"[START] Iniciando Pipeline ({self.app_name})...")
+        self.cleanup_old_logs()
+        
         for table_conf in self.config['tables']:
             if target_table and table_conf['name'] != target_table: continue 
             self.process_table(table_conf, override_percent)
