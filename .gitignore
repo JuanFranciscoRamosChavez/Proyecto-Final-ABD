@@ -1,0 +1,63 @@
+# --- DEPENDENCIAS Y BUILDS (Frontend) ---
+node_modules
+dist
+dist-ssr
+*.local
+
+# --- LOGS ---
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- PYTHON / BACKEND  ---
+# Byte-compiled / Optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+.venv/
+env/
+.env
+
+# Distribution / Packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- SEGURIDAD ---
+.env
+backend/.env
+.DS_Store
+
+# --- ARCHIVOS GENERADOS POR LA APP ---
+backend/notifications_log.json
+*.sqlite3
+*.db
+
+# --- EDITOR / IDE ---
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

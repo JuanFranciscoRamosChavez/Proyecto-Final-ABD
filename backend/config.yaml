@@ -1,0 +1,41 @@
+settings:
+  app_name: DataMask
+  batch_size: 100
+  extraction_window_days: 8
+  security:
+    audit_detailed: true
+    encryption_at_rest: false
+    log_retention_days: 90
+  scheduler:
+    enabled: true
+    auto_retry: true
+    timeout_minutes: 30
+    interval_minutes: 60
+databases:
+  source_db_env_var: SUPABASE_PROD_URI
+  target_db_env_var: SUPABASE_QA_URI
+tables:
+- name: inventario
+  pk: id
+  filter_column: fecha_registro
+  masking_rules:
+    producto: hash_email
+    ubicacion: redact
+- name: clientes
+  pk: id
+  filter_column: fecha_registro
+  masking_rules:
+    nombre: fake_name
+    email: hash_email
+    telefono: preserve_format
+    direccion: redact
+- name: ordenes
+  pk: id
+  filter_column: fecha
+  masking_rules:
+    total: none
+- name: detalle_ordenes
+  pk: id
+  masking_rules:
+    producto: hash_email
+    precio_unitario: none
