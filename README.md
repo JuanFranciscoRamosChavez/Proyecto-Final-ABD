@@ -151,6 +151,7 @@ graph TD
    
 3.  **Instalar las dependencias**:
     ```bash
+    cd backend
     pip install -r requirements.txt
     ```
     
@@ -194,3 +195,4 @@ Explicamos cómo entrar y qué hacer.
 2. **Sincronizar:** Usa el botón **"Sincronizar"** para que el sistema detecte automáticamente las tablas existentes y cree los pipelines.
 3. **Ejecutar:** Puedes ejecutar una migración completa o definir un porcentaje de muestreo (ej. 20%).
 4. **Respaldos:** Antes de operaciones críticas, usa el botón **"Crear Respaldo"**. Se generará un archivo `.sql.enc` cifrado.
+
