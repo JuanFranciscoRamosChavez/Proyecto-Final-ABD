@@ -11,7 +11,8 @@ export interface Pipeline {
   nextRun?: string;
   tablesCount: number;
   maskingRulesCount: number;
-  recordsProcessed?: number; 
+  recordsProcessed?: number;
+  isActive?: boolean;
 }
 
 export interface ExecutionLog {
