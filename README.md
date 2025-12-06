@@ -157,7 +157,6 @@ graph TD
 4. **Configurar variables de entorno**  
    - El archivo `.env` está en `.gitignore` y viene vacío intencionadamente.  
    - Copia la información que te proporcionaremos en la documentación anteriormente entregada y coloca todo en el archivo `.env` en tu entorno de ejecución local.
-   - Rellena todas las variables con las credenciales que te proporcionaremos (clave de API, datos de la base de datos, URL del frontend, etc.)  
    Sin esto, la aplicación no podrá conectarse correctamente.
 
 5. **Inicializamos el servidor**
@@ -178,10 +177,18 @@ graph TD
    ```
    - Abre tu navegador en http://localhost:8080
 
+### 3. Como decifrar el `.sql.enc`:
+
+1. **Usamos el código creado para decifrar nuestras copias de seguridad:**
+
+   ```bash
+    python backend/restore_util.py
+   ```
+
 ### Uso y Guía de Roles
 Explicamos cómo entrar y qué hacer.
 
-### Primeros Pasos
+#### Primeros Pasos
 
 1. **Inicializar Entornos:** Al iniciar por primera vez, ingresa como DBA y ve a *Pipelines*. Haz clic en **"Generar Datos Fuente"**. Esto creará las tablas en Producción y etiquetará las bases de datos para seguridad.
 2. **Sincronizar:** Usa el botón **"Sincronizar"** para que el sistema detecte automáticamente las tablas existentes y cree los pipelines.
