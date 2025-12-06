@@ -160,12 +160,14 @@ graph TD
    - Rellena todas las variables con las credenciales que te proporcionaremos (clave de API, datos de la base de datos, URL del frontend, etc.)  
    Sin esto, la aplicación no podrá conectarse correctamente.
 
-   
 5. **Inicializamos el servidor**
     ```bash
     python backend/app.py
     ```
-6. **Abrimos una nueva terminal en Proyecto-Final-ABD para cargar el frontend**
+
+### 2. Frontend (React + Vite + Tailwind)
+
+1. **Abrimos una nueva terminal en Proyecto-Final-ABD para cargar el frontend**
    - Instalamos las dependencias:
    ```bash
     npm install
