@@ -38,6 +38,92 @@ DataMask ETL resuelve el problema de probar software con datos reales sin compro
 - **Cryptography**: Cifrado de backups.
 - **APScheduler**: Programación de tareas automáticas.
 
+## Diagrama de arquitectura
+```mermaid
+graph TD
+    %% DEFINICIÓN DE NODOS Y ESTILOS
+    
+    classDef actor fill:#2d3436,stroke:#000,stroke-width:2px,color:#fff;
+    classDef frontend fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1;
+    classDef backend fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
+    classDef database fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100;
+    classDef storage fill:#f5f5f5,stroke:#616161,stroke-width:2px,color:#212121;
+    classDef security fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f;
+
+    %% ACTORES
+    User((Usuario / DBA)):::actor
+
+    %% CAPA CLIENTE
+    subgraph ClientLayer [ Capa de Presentación]
+        direction TB
+        UI[Frontend SPA<br/>React + Vite + Tailwind]:::frontend
+    end
+
+    %% CAPA SERVIDOR
+    subgraph ServerLayer [ Capa de Aplicación - Backend]
+        direction TB
+        
+        API[API Gateway<br/>Flask / app.py]:::backend
+        Scheduler[Planificador<br/>APScheduler]:::backend
+        
+        subgraph ETLBox [Motor de Procesamiento]
+            direction TB
+            ETL[ETL Engine<br/>etl_core.py]:::backend
+            Masking[Módulo de Enmascaramiento<br/>Faker + HashLib]:::backend
+            Security[Validación de Entornos<br/>Check _db_meta]:::security
+            Backup[Servicio de Respaldo<br/>Cifrado Fernet]:::security
+        end
+
+        ConfigFiles[Configuración<br/>config.yaml / .env]:::storage
+        LocalFiles[Almacenamiento Local<br/>.sql.enc / .json]:::storage
+    end
+
+    %% CAPA DE DATOS
+    subgraph DataLayer [ Capa de Datos]
+        direction LR
+        ProdDB[(Base de Datos<br/>PRODUCCIÓN)]:::database
+        QADB[(Base de Datos<br/>QA / TEST)]:::database
+    end
+
+    %% RELACIONES Y FLUJOS
+    %% Interacción Usuario
+    User -->|HTTPS / Navegador| UI
+
+    %% Comunicación Front-Back
+    UI <-->|JSON / REST API| API
+
+    %% Flujo de Control Backend
+    API -->|Inicia Procesos| ETL
+    Scheduler -->|Ejecución Automática| ETL
+    ETL -->|Carga Reglas| ConfigFiles
+    API -->|Lee/Escribe| ConfigFiles
+
+    %% Lógica del ETL
+    ETL -- 1. Valida Identidad --> Security
+    Security -.->|Verifica Metadatos| ProdDB
+    Security -.->|Verifica Metadatos| QADB
+    
+    ETL -- 2. Extrae Datos (Solo Lectura) --> ProdDB
+    ETL -- 3. Transforma en Memoria --> Masking
+    ETL -- 4. Carga Datos Seguros --> QADB
+    
+    %% Logs y Auditoría
+    ETL -- 5. Registra Auditoría --> QADB
+    
+    %% Flujo de Respaldo
+    API -->|Solicita Backup| Backup
+    Backup -->|Extrae SQL| ProdDB
+    Backup -->|Extrae SQL| QADB
+    Backup -->|Guarda Archivo Cifrado| LocalFiles
+
+    %% Inicialización
+    InitScript[Script Inicialización<br/>init_db.py]:::backend
+    API -.->|Seed Data| InitScript
+    InitScript -.->|Crea Tablas + Datos| ProdDB
+    InitScript -.->|Crea Estructura Vacía| QADB
+```
+
+
 ##  Instalación y Configuración para su Ejecución Local
 
 ### 1. Backend (API Python)
