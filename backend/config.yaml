@@ -19,13 +19,13 @@ databases:
 tables:
 - name: inventario
   pk: id
-  filter_column: fecha_registro
+  filter_column: id
   masking_rules:
     producto: hash_email
     ubicacion: redact
 - name: clientes
   pk: id
-  filter_column: fecha_registro
+  filter_column: id
   masking_rules:
     nombre: fake_name
     email: hash_email
@@ -33,7 +33,7 @@ tables:
     direccion: redact
 - name: ordenes
   pk: id
-  filter_column: fecha
+  filter_column: id
   masking_rules:
     total: none
 - name: detalle_ordenes
