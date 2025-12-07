@@ -169,7 +169,7 @@ graph TD
 1. **Abrimos una nueva terminal en Proyecto-Final-ABD para cargar el frontend**
    - Instalamos las dependencias:
    ```bash
-    npm install
+    npm install --legacy-peer-deps
    ```
    - Iniciamos el servidor de desarrollo:
    ```bash
@@ -194,5 +194,6 @@ Explicamos cómo entrar y qué hacer.
 2. **Sincronizar:** Usa el botón **"Sincronizar"** para que el sistema detecte automáticamente las tablas existentes y cree los pipelines.
 3. **Ejecutar:** Puedes ejecutar una migración completa o definir un porcentaje de muestreo (ej. 20%).
 4. **Respaldos:** Antes de operaciones críticas, usa el botón **"Crear Respaldo"**. Se generará un archivo `.sql.enc` cifrado.
+
 
 
