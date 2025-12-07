@@ -128,7 +128,7 @@ CREATE TABLE _db_meta (key VARCHAR PRIMARY KEY, value VARCHAR);
                 conn.commit()
         except: pass
 
-    # --- LOG A JSON ---
+    # --- LOG A JSON (ESTRUCTURADO PARA EL ASESOR) ---
     def save_json_report(self, table, status, records, mode, error_msg=None, start_time=None, end_time=None, execution_id=None, rules=None, failed=0):
         try:
             if not self.config.get('settings', {}).get('notifications', {}).get('enabled', False): return

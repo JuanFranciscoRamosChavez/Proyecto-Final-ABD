@@ -95,17 +95,17 @@ def generate_source_data(counts=None):
 
             CREATE TABLE IF NOT EXISTS auditoria (
                 id SERIAL PRIMARY KEY, 
-                id_ejecucion VARCHAR(50),      
+                id_ejecucion VARCHAR(50),      -- Requisito Asesor
                 fecha_ejecucion TIMESTAMP, 
                 tabla VARCHAR(50), 
                 registros_procesados INTEGER, 
-                registros_fallidos INTEGER DEFAULT 0, 
+                registros_fallidos INTEGER DEFAULT 0, -- Requisito Asesor
                 estado VARCHAR(100), 
                 mensaje TEXT, 
-                operacion VARCHAR(50),        
-                reglas_aplicadas TEXT,       
-                fecha_inicio TIMESTAMP,        
-                fecha_fin TIMESTAMP            
+                operacion VARCHAR(50),         -- Requisito Asesor
+                reglas_aplicadas TEXT,         -- Requisito Asesor
+                fecha_inicio TIMESTAMP,        -- Requisito Asesor
+                fecha_fin TIMESTAMP            -- Requisito Asesor
             );
         """))
         # Aseguramos columnas si la tabla ya existía
@@ -114,7 +114,7 @@ def generate_source_data(counts=None):
         conn.execute(text("ALTER TABLE auditoria ADD COLUMN IF NOT EXISTS reglas_aplicadas TEXT"))
         conn.commit()
     
-    print(" ¡Base de datos regenerada y estructura!")
+    print(" ¡Entornos listos!")
 
 if __name__ == "__main__":
     generate_source_data()
